@@ -15,13 +15,12 @@ comments: true
 - **Template C++**：泛型编程模块。
 - **STL**：STL是一个封装了容器、迭代器、算法以及函数对象的template库。
 
-{% blockquote %}
-**Note：为什么要区分C++中的语言模块**
+**为什么要区分C++中的语言模块**
 为了提高C++的效率，使用不同的语言模块需要遵循不同的编程策略，例如：
 - 在C语言中，一般使用值传递（pass-by-value）；
 - 在OOC和模板C++中，使用常量引用（pass-by-reference-const）传递更加高效；
 - 对于STL，因为迭代器是基于指针构造而成，直接使用值传递即可。
-{% endblockquote %}
+
 
 ## item2 用const,enum,inline替换#define
 换言之，以**编译器替换预处理器**。预处理宏会在编译器之前被简单的替换成代码，经常会发生意料之外的错误，这种错误往往难以跟踪到。因此，除了一些特殊的指令外，如`#include`，应该尽量避免使用预处理宏。解决之道是对`#define`进行替换。
@@ -29,39 +28,37 @@ comments: true
 - **数值常量**：对于数值类型的常量，可以通过定义一个全局常量来对`#define`进行替换，如`const double A=3.141592654;`替换`#define A 3.141592654`。
 - **常量指针**：由于常量定义通常被放在头文件中以便被不同的源码包含，因此需要把指针以及指针指向的数据都定义位`const`，如`const char* const author="Scotter Meyers";`。
 - **类的常量**：对于类中的常量成员，为了保证其能被类的对象访问到，又不会生成多个拷贝，需要将其声明为静态常量，即
-{% codeblock lang:cpp %}
+```
 class Player{
 private:
     static const int numTurns=5;//静态成员变量，属于类不会在实例化过程中产生拷贝；const成员，不能进行赋值操作
 }
-{% endcodeblock %}
+```
 
 ### 2.2 enum使用技巧
 当我们要在一个类中声明一个常量，这个常量不允许在在声明时进行初始化，而接下来某个语句明确要用到这个变量，比如说静态数组的声明，如：
-{% codeblock lang:cpp %}
+```
 class Player{
 private:
     static const int numTurns;//一些编译器不允许static成员在声明时赋值，需要在类外进行定义
     int scores[numTurns]; // 编译无法通过，在编译过程中必须要指定数组大小
 }
-{% endcodeblock %}
+```
 面对上面个的问题，我们可以选择使用enum来解决，即：
-{% codeblock lang:cpp %}
+```
 class Player{
 private:
     enum {NumTurns=5};    // 因为枚举类型的数值可以充当int使用，
     int scores[NumTurns]; // 所以，编译通过。
 }
-{% endcodeblock %}
+```
 
 ### 2.3 inline函数
 对于一些简单又需要反复调用的程序语句，将其封装成函数是非常不划算的，因为调用函数的开销甚至超过了函数内代码运行的开销。`#define`实现类似于函数的宏定义，好处是可以减少简单函数调用造成额外开销，但是其代码非常不雅观，而且会导致一些未知的错误。C++提供了**内联函数**来帮助我们避免简单函数调用带来的不必要开销，也可以避免宏替换带来的不可预料的错误。
 
-{% blockquote %}
 **Note：总结**
 - 对于单纯的常量，最好用`const`对象或`enum`对象替换`#define`
 - 对于形似函数的宏，最好用`inline`函数替换`#define`
-{% endblockquote %}
 
 ## item3 尽可能多用const
 const允许指定一个语义约束，告诉编译器和程序员某个值应该保持不变，而编译器会强制实施这个约束。
@@ -69,16 +66,16 @@ const允许指定一个语义约束，告诉编译器和程序员某个值应该
 - **常量指针**：指向常量的指针，const在`*`左边
 - **指针常量**：指针类型的常量，const在`*`右边
 
-{% codeblock lang:cpp %}
+```
 const char* p; // 数据是常量
 char const* p; // 数据是常量
 char* const p; // 指针是常量
 const char* const p; // 指针和数据都是常量
-{% endcodeblock %}
+```
 
 ### 3.2 const与STL迭代器
 STL迭代器相当于类型T的指针，即`T*`。因此，如果想定义一个迭代器指向一个常数，需要使用const_iterator。
-{% codeblock lang:cpp %}
+```
 std::vector<int> vec;
 std::vector<int>::const_iterator const_itr = vec.begin(); // const_itr类似于const T*，指向一个常量
 ++const_itr;                                              // 迭代器可变
@@ -87,23 +84,23 @@ std::vector<int>::const_iterator const_itr = vec.begin(); // const_itr类似于c
 const std::vector<int>::iterator itr = vec.begin();       // iter类似于T* const
 ++itr;                                                    // 错误，指针是一个常量
 *itr = 10;                                                // 改变指向的值
-{% endcodeblock %}
+```
 
 ### 3.3 const与函数
 const最有效的用法是在函数声明时的应用。在一个函数声明式内，const可以和函数返回值、参数以及函数自身产生关联。例如，我们可以让函数返回一个常量值，可以降低因用户错误而造成的意外。
-{% codeblock lang:cpp %}
+```
 class Rational{...};
 Rational operator*(const Rational& lhs, const Rational& rhs){...};
-{% endcodeblock %}
+```
 在某处使用乘法操作符时，误把比较操作符`===`写成了赋值操作符`=`，如
-{% codeblock lang:cpp %}
+```
 Rational a,b,c;
 if((a*b)=c){...}     // 编译器不会报错，很难追踪错误
-{% endcodeblock %}
+```
 解决办法是**将操作符定义为返回const**，这样对其赋值将会是非法操作。
-{% codeblock lang:cpp %}
+```
 const Rational operator*(const Rational& lhs, const Rational& rhs){...};
-{% endcodeblock %}
+```
 
 ### 3.4 const与类的成员函数
 用const关键字修饰类的成员函数主要有两个作用：
@@ -112,7 +109,7 @@ const Rational operator*(const Rational& lhs, const Rational& rhs){...};
 
 ### 3.5 数据常量性和逻辑常量性
 C++标准对成员函数常量性的规定是**数据常量性**，即不允许成员变量被修改。C++编译器对此的检测标准是**检查该成员函数中有没有给成员变量进行赋值操作**。
-{% codeblock lang:cpp %}
+```
 class CTextBlock
 {
     public:
@@ -123,16 +120,16 @@ class CTextBlock
     private:
         char* pText;
 }
-{% endcodeblock %}
+```
 只有指针属于对象，指针所指向的数据不属于对象，const修饰的`operator[]`中并没有赋值操作符，编译器会通过编译，但是其存在着潜在风险。如：
-{% codeblock lang:cpp %}
+```
 const CTextBlock ctb("Hello"); // 声明一个常量对象
 char* pc = &ctb[0];            // 调用operator[]取得一个指针，指向ctb的数据
 *pc = "J";                     // 数据被修改为"Jello"
-{% endcodeblock %}
+```
 
 数据常量性还存在着另一个局限性，如：
-{% codeblock lang:cpp %}
+```
 class CTextBlock
 {
     public:
@@ -150,9 +147,9 @@ class CTextBlock
         std::size_t textLength;
         bool lengthIsValid;
 }
-{% endcodeblock %}
+```
 解决办法是**逻辑常量性**，即使用`mutable`关键字来修饰成员变量，允许数据被修改，但是这些修改不反映到类外。
-{% codeblock lang:cpp %}
+```
 class CTextBlock
 {
     public:
@@ -170,11 +167,11 @@ class CTextBlock
         mutable std::size_t textLength;
         mutable bool lengthIsValid;
 }
-{% endcodeblock %}
+```
 
 ### 3.6 在const和non-const成员函数中避免重复
 在C+++中，两个函数如果只是常量性不同，可以被重载。但是这样就存在着两个几乎完全重复的函数，虽然可以另外写一个私有函数进行调用，但是还是存在一些重复的代码，如函数调用和return等语句。我们真正应该实现的是**一次实现，两次调用**，即其中一个调用另一个，需要用到**常量性转换**。
-{% codeblock lang:cpp %}
+```
 class TextBlock
 {
    public:
@@ -194,14 +191,12 @@ class TextBlock
     private:
         char* pText;
 }
-{% endcodeblock %}
+```
 
-{% blockquote %}
 **Note：总结**
 - 变量，指针，迭代器以及函数都可以通过const的修饰来实现只读的目的；
 - 编译器强制使用的是数据常量性，但是编写程序的时候应该采用逻辑常量性，对需要修改的成员变量加上`mutalbe`关键字修饰；
 - const和non-const成员函数有着大量重复的实现，可以使用non-const函数来调用const函数来避免重复。
-{% endblockquote %}
 
 ## item4 对象在使用前已被初始化
 C++不能保证每个对象在定义时都被自动初始化，最佳的办法就是永远在使用对象之前先将其初始化。
@@ -222,12 +217,12 @@ C++的内置数据类型继承自C，不能保证变量在定义式自动初始�
 
 ### 4.3 non-local static对象的初始化
 在不同的源码文件中，分别包含了至少一个non-local static对象，当这些对象发生互动时，他们的初始化顺序是不确定的，直接使用这些对象会给程序的运行带来风险。
-{% blockquote %}
+
 **Note：non-local static对象**
 所谓的static对象，其生命周期从被构造出来到程序结束，包括全局对象、定义在namespace作用域内的对象、在类或者函数内被声明为static的对象。其中，在函数内的static对象称为local static对象，其他的static对象我们就称为nono-local static对象。
 静态对象不是基于堆或者栈的，初始化的静态对象在内存的Data段，未初始化的位于BSS段。
-{% endblockquote %}
-{% codeblock lang:cpp %}
+
+```
 /* demo1.cpp */
 class FileSyste
 {
@@ -246,9 +241,9 @@ public:
         std::size_t disks = fs.numDisks();  // 调用了fs对象
     }
 }
-{% endcodeblock %}
+```
 在上述代码中，如果我们要创建一个`Directory`对象，构造函数就会调用`fs`对象。但是两个对象是在不同的源文件不同的时间建立起来的，无法保证fs已经被初始化。解决办法就是：**将non-local static对象转换成local static对象**，即将每一个non-local static对象放到一个函数里面去，这是单例模式的常用的手法。其依据是：在C++中，函数的local static对象会在该函数第一次被调用时进行初始化，因此我们只需要让函数返回一个指向local static对象的指针或引用，就可以得到一个在使用时保证被初始化的对象。
-{% codeblock lang:cpp %}
+```
     /* demo1.cpp */
     class FileSyste
     {
@@ -276,14 +271,12 @@ public:
         static Directory dir;
         return dir;
     }
-{% endcodeblock %}
+```
 
-{% blockquote %}
 **Note：总结**
 - 对于内置的数据类型，要进行手动初始化；
 - 构造函数对类进行初始化最好使用*初始化列表* 来替换*在构造函数中使用赋值操作* 。构造函数按照变量声明的顺序进行初始化；
 - 对于静态对象，用局部静态对象来替换全局静态对象来保证使用前确定被初始化。
-{% endblockquote %}
 
 ## 参考文献 & 资源链接
 - [Effective C++ 读书笔记](https://zhuanlan.zhihu.com/c_1104392405461315584)
