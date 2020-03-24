@@ -103,7 +103,7 @@ item18中提到，良好的接口可以防止无效的代码通过编译。因�
 		std::cin>>x;
 	}
 ```
-![](/resource/images/effective_cpp33_global_scop.gif)
+![](resource/images/effective_cpp33_global_scop.gif)
 
 上面代码中于数据读取相关的是局部变量，这是因为内层的作用域名称会屏蔽外部作用域的名称。当编译器在someFunc的作用域中遇到x时，会在当前作用域寻找相关的定义，如果找到就不会再检查其他作用域。在此例中，someFunc的x类型为double，全局x的类型为int，但是这不会影响结果，因为C++名字屏蔽的规则是**只覆盖名称，和类型无关**。
 
