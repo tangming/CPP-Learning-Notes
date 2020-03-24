@@ -1,4 +1,5 @@
 # Effective C++中文版(第三版) 学习笔记
+
 ### part1 习惯C++
 - item1 视C++为一个语言集合
 - item2 用const,enum,inline代替#define
@@ -18,7 +19,7 @@
 ### part3 资源管理
 - item13 使用对象来管理资源
 - item14 注意资源管理类中的拷贝行为
-- item15 在资源管理类中提供对原始资源的访问
+- item15 在资源管理类中提供对原始资源的访问git
 - item16 使用new/delete形式要对应
 - item17 用单独的语句来创建智能指针
 
@@ -41,6 +42,15 @@
 - item31 最小化文件之间的编译依赖关系
 
 ### part6
+- item32 让public继承塑造出is-a关系
+- item33 避免继承中发生的名称覆盖
+- item34 区分接口继承和实现继承
+- item35 考虑virtual函数的替代方法
+- item36 不要重写继承来的非虚函数
+- item37 不要重定义通过继承得到的默认参数值
+- item38 通过组合塑造has-a或use-a关系
+- item39 慎用private继承
+- item40 慎用多继承
 
 ### part7
 

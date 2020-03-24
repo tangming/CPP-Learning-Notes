@@ -94,25 +94,16 @@ item18中提到，良好的接口可以防止无效的代码通过编译。因�
 
 
 ## item33 避免继承中发生的名称覆盖
-名称屏蔽的发生其实和继承无关，而是和作用域有关。举个例子
-
-<html>
-    <table style="margin-lsft:auto; margin-right:auto;">
-        <td>
-            ```
-            int x; // 全局变量
-            void someFunc()
-            {
-                double x; // 局部变量
-                std::cin>>x;
-            }
-            ```
-        </td>
-            ![](/resource/images/effective_cpp33_scop.gif)
-        <td>
-        </td>
-    </table>
-</html>
+名称屏蔽的发生其实和继承无关，而是和作用域有关。举个例子：
+```
+	int x; // 全局变量
+	void someFunc()
+	{
+		double x; // 局部变量
+		std::cin>>x;
+	}
+```
+![](/resource/images/effective_cpp33_global_scop.gif)
 
 上面代码中于数据读取相关的是局部变量，这是因为内层的作用域名称会屏蔽外部作用域的名称。当编译器在someFunc的作用域中遇到x时，会在当前作用域寻找相关的定义，如果找到就不会再检查其他作用域。在此例中，someFunc的x类型为double，全局x的类型为int，但是这不会影响结果，因为C++名字屏蔽的规则是**只覆盖名称，和类型无关**。
 
@@ -138,6 +129,7 @@ item18中提到，良好的接口可以防止无效的代码通过编译。因�
         void mf4(){ mf2();}
     }
 ```
+![](/resource/images/effective_cpp33_scop1.gif)
 上述代码中既涉及了public和private，也涉及了成员变量和成员函数，还涉及了虚函数，纯虚函数和普通函数三种概念，这是为了强调我们讨论的内容至于名称有关，和其他无关。上述代码中，mf4调用了mf2函数。编译器的做法是查找各个作用域，先查找mf4函数的作用域，然后查找类Derived的作用域，接着查找类Base的作用域，类Base所在命名空间的作用域，最后到全局作用域，直到编译器找到mf2为止。
 
 接下来我们在派生类中重载函数mf1和mf3，并且为派生类增加一个新的mf3函数(要避免重定义继承而来的非虚函数，item36)：
@@ -165,6 +157,7 @@ item18中提到，良好的接口可以防止无效的代码通过编译。因�
         ...
     }
 ```
+![](/resource/images/effective_cpp33_scop2.gif)
 由于名字屏蔽，上述代码中Base类中所有名为mf1和mf3的函数都被Derived类中名为mf1和mf3的函数覆盖。从名称搜索的观点来看，`Base::mf1`和`Base::mf3`不再被类Derived继承。上述规则，即使基类和派生类中的函数有不同的参数类型也适用，无论是否是虚函数也适用。名称屏蔽的原因是，防止我们在程序库或应用框架内建立一个新的派生类时附带地从遥远的基类中继承重载函数。
 ```
     Derived d;
@@ -214,6 +207,7 @@ item18中提到，良好的接口可以防止无效的代码通过编译。因�
     d.mf3();   // 正确，调用Derived::mf3
     d.mf3(x);  // 正确，调用Base::mf3
 ```
+![](/resource/images/effective_cpp33_scop3.gif)
 从上述代码可以看出，如果继承了一个带有重载函数的基类并且想在派生类中重定义其中的一部分，那么需要在派生类中为不想被屏蔽的名称进行**using声明**。
 
 在public继承中，派生类和基类是is-a的关系，派生类继承了基类的所有函数，但是有的时候我们只想继承某一个重载函数，using声明式在这里派不上用场，因为using声明式会让继承来的给定名称的多有同名函数在派生类中可见。因此，我们需要用到另一种技术——**转发函数(forwarding function)**。
@@ -863,6 +857,7 @@ C++中调用重载函数的规则是：首先确认调用函数的匹配度，�
     class OutputFile:public File{}
     class IOFile:public InputFile, public OutputFile{}
 ```
+![](/resource/images/effective_cpp40_inheritence1.gif)
 我们假设类File中有一个成员变量filename，那么IOFile继承下来的filename成员变量应该有多少个呢，一个或者两个？事实上，C++两种情况都支持，默认是保存两份数据的方式。如果只需要保存一份，就需要让类File称为一个虚基类，这样就需要让所有直接继承File类的派生类使用**virtual继承**。
 ```
     class File{}
@@ -872,6 +867,7 @@ C++中调用重载函数的规则是：首先确认调用函数的匹配度，�
                  public OutputFile
     {...}
 ```
+![](/resource/images/effective_cpp40_inheritence2.gif)
 C++标准库中包含了一个多重继承体系，名称分别为`basic_ios`，`basic_istream`，`basic_ostream`和`basic_iostream`。
 为了保证程序的正确性，我们希望public继承都是virtual。但是，正确性有时候并不是我们唯一需要考虑的。虚继承的实例化的对象要比普通的对象占用更多的空间，访问virtual基类的成员变量的速度也比non-virtual基类的成员变量要慢。另外，virtual基类的初始化责任是由继承体系中最底层的派生类来完成的，而且要负责初始化整个继承链上所有虚基类的初始化。
 作者对于birtual继承的建议是：第一，尽量不要使用virtual基类；第二，如果必须使用virtual基类，要避免在其中放置数据变量。这样可以减少因为初始化带来的意想不到的错误。
